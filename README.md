@@ -61,16 +61,16 @@ handle running tasks (in threads of via a queue or whatever); a model applicatio
 both serve models and updates to them.
 
 An example of how a model application may work:
-	* You have a database (perhaps set up using a SproutCore model...)
-	* Clients send signal ::attach with a path as its message
-	  (no UID since they are sending it _directly_ to a Dudley that _knows_ their ID)
-	* Roots model stores this request in a queue.
-	* Roots model sends myapp/is_authenticated signal to authentication server w/ID
-	  If they are on the same machine, this happens without going over IP, so is instant.
-	  As in, it doesn't even touch networking code.
-	* Roots model receives signal myapp/authenticated (with appropriate ID)
-	* Roots processes all entires in the queue for that ID
-	* Roots would likely cache authentication state and listen for updates on that state.
+* You have a database (perhaps set up using a SproutCore model...)
+* Clients send signal ::attach with a path as its message
+  (no UID since they are sending it _directly_ to a Dudley that _knows_ their ID)
+* Roots model stores this request in a queue.
+* Roots model sends myapp/is_authenticated signal to authentication server w/ID
+  If they are on the same machine, this happens without going over IP, so is instant.
+  As in, it doesn't even touch networking code.
+* Roots model receives signal myapp/authenticated (with appropriate ID)
+* Roots processes all entires in the queue for that ID
+* Roots would likely cache authentication state and listen for updates on that state.
 
 If this idea _does_ happen, I think there'd be some base classes for authentication, task running,
 etc.
@@ -81,124 +81,124 @@ SproutCore, that would be wonderful, too.
 
 Scratch notes to myself, with many require-errors:
 
-/* CAN I GET SPROUTCORE ON THE SERVER BECAUSE THAT WOULD BE COOL! */
-// main.js
+	/* CAN I GET SPROUTCORE ON THE SERVER BECAUSE THAT WOULD BE COOL! */
+	// main.js
 
-var Dolores = require("dobby").Dolores;
-var Owl = require("dobby/owl");
-var root = require("core").root; // the root responder
+	var Dolores = require("dobby").Dolores;
+	var Owl = require("dobby/owl");
+	var root = require("core").root; // the root responder
 
-/* Your organizer */
-var dolores = Dolores.create({
-	delegate: "pig".w(),
-	pig: Owl.Hedwig.create()
-});
+	/* Your organizer */
+	var dolores = Dolores.create({
+		delegate: "pig".w(),
+		pig: Owl.Hedwig.create()
+	});
 
-/* Your handler (you edit in core.js) */
-var firenze = Firenze.create({
-	host: "localhost",
-	port: 8008,
-	dolores: dolores,
-	allowIncoming: YES,
-	responder: root
-});
+	/* Your handler (you edit in core.js) */
+	var firenze = Firenze.create({
+		host: "localhost",
+		port: 8008,
+		dolores: dolores,
+		allowIncoming: YES,
+		responder: root
+	});
 
 
 
-// core.js
-var Seed = require("roots").Seed;
-var Contacts = require("contacts");
-exports.Root = Seed.Create({ // seeds are root paths; like a root view, they
-	// tell all their children who the root is.
-	// a seed may contain a seed, but the child seed will not be able to talk
-	// to the parent seed under most circumstances (in short, the child seed
-	// will be a completely individual app, unable to access the parent's paths
-	// implicitly).
-	//
-	// the implicit access is like this: Contacts.Contacts can ask for "authenticate";
-	// that will call the seed and ask for its "authenticate"
+	// core.js
+	var Seed = require("roots").Seed;
+	var Contacts = require("contacts");
+	exports.Root = Seed.Create({ // seeds are root paths; like a root view, they
+		// tell all their children who the root is.
+		// a seed may contain a seed, but the child seed will not be able to talk
+		// to the parent seed under most circumstances (in short, the child seed
+		// will be a completely individual app, unable to access the parent's paths
+		// implicitly).
+		//
+		// the implicit access is like this: Contacts.Contacts can ask for "authenticate";
+		// that will call the seed and ask for its "authenticate"
 	
-	// names beginning with : are event names?
-	":authenticate": Contacts.Authentication.create(),
-	":contacts": Contacts.Contacts.create(),
-	":groups": Contacts.Groups.create()
-});
+		// names beginning with : are event names?
+		":authenticate": Contacts.Authentication.create(),
+		":contacts": Contacts.Contacts.create(),
+		":groups": Contacts.Groups.create()
+	});
 
-// contacts.js
-exports.Authentication = require("./roots/authenticate").Authentication
-exports.Contacts = require("./roots/contacts").Contacts;
-exports.Groups = require("./roots/groups").Groups;
+	// contacts.js
+	exports.Authentication = require("./roots/authenticate").Authentication
+	exports.Contacts = require("./roots/contacts").Contacts;
+	exports.Groups = require("./roots/groups").Groups;
 
-// contacts/authenticate.js
-exports.Authentication = roots.Auth.extend({
-	messagesAreJSON: YES, // this is default?
+	// contacts/authenticate.js
+	exports.Authentication = roots.Auth.extend({
+		messagesAreJSON: YES, // this is default?
 	
-	// regular expression results sent as arguments...
-	":authenticated/([a-zA-Z0-9\-_]+)": function(iq, path, message, theid){
-		iq.connect(path); // iq is our own. The sender object, etc., must be
-		// accessed via iq.sender, iq.id, etc., I suppose
+		// regular expression results sent as arguments...
+		":authenticated/([a-zA-Z0-9\-_]+)": function(iq, path, message, theid){
+			iq.connect(path); // iq is our own. The sender object, etc., must be
+			// accessed via iq.sender, iq.id, etc., I suppose
 		
-		if (this.authenticated[theid]) this.seed("authenticated", path, true);
-	},
-	":authenticate": function(iq, path, message){
-		// assuming it checks out
-		if (message.username == "willow" && message.password == "xander") {
-			this.seed("authenticated", path, true);
+			if (this.authenticated[theid]) this.seed("authenticated", path, true);
+		},
+		":authenticate": function(iq, path, message){
+			// assuming it checks out
+			if (message.username == "willow" && message.password == "xander") {
+				this.seed("authenticated", path, true);
+			}
+		},
+		":deauthenticate": function(){
+			this.seed("authenticated", path, false); // for those who cache it, obviously.
+		},
+	
+		"::force-authenticate": function(iq, path, message){
+			if (!iq.secure) return;
 		}
-	},
-	":deauthenticate": function(){
-		this.seed("authenticated", path, false); // for those who cache it, obviously.
-	},
 	
-	"::force-authenticate": function(iq, path, message){
-		if (!iq.secure) return;
-	}
-	
-	// built-in: "::connect", etc.
-});
+		// built-in: "::connect", etc.
+	});
 
-// contacts/contacts.js
-// vein? artery? Whatever it is called, it is a model transport.
-exports.Contacts = roots.Vein.extend({
-	model: require("models/contact").Contact,
-	requiresAuthentication: YES,
+	// contacts/contacts.js
+	// vein? artery? Whatever it is called, it is a model transport.
+	exports.Contacts = roots.Vein.extend({
+		model: require("models/contact").Contact,
+		requiresAuthentication: YES,
 	
-	// these are default-ish?
-	authenticatedPath: "authenticated",
-	":": function(iq, path, message){
-		if (iq.needsAuthentication) {
-			// add request to client's queue
-			iq.queue("auth", "");
+		// these are default-ish?
+		authenticatedPath: "authenticated",
+		":": function(iq, path, message){
+			if (iq.needsAuthentication) {
+				// add request to client's queue
+				iq.queue("auth", "");
 			
-			// really, should be relatively direct.
-			this.seed(this.authenticatedPath + "/" + iq.id);
-			return;
-		}
+				// really, should be relatively direct.
+				this.seed(this.authenticatedPath + "/" + iq.id);
+				return;
+			}
 		
-		iq.connect(""); // in our dispatch
+			iq.connect(""); // in our dispatch
 		
-		// not sure if this should work some other way;
-		// would like to separate DB from model-server; should it be implemented
-		// as message handler too? Might not be too tricky...
-		var result = this.store.query(this.model);
-		result.callback(function(result){
-			// one way to do it (perhaps best way, perhaps not...)
-			result.forEach(function(i){ iq.update("", i); });
-		});
-	},
+			// not sure if this should work some other way;
+			// would like to separate DB from model-server; should it be implemented
+			// as message handler too? Might not be too tricky...
+			var result = this.store.query(this.model);
+			result.callback(function(result){
+				// one way to do it (perhaps best way, perhaps not...)
+				result.forEach(function(i){ iq.update("", i); });
+			});
+		},
 	
-	":authenticated/([a-zA-Z0-9\-_])": function(iq, path, message, theid){
-		this.authenticated(theid, message);
-	},
+		":authenticated/([a-zA-Z0-9\-_])": function(iq, path, message, theid){
+			this.authenticated(theid, message);
+		},
 	
-	authenticated: function(who, message){
-		var iq = this.iq(who);
-		if (message === true){
-			iq.needsAuthentication = false;
-			iq.processQueue("auth"); // handle queued entries
+		authenticated: function(who, message){
+			var iq = this.iq(who);
+			if (message === true){
+				iq.needsAuthentication = false;
+				iq.processQueue("auth"); // handle queued entries
+			}
 		}
-	}
-});
+	});
 
 
 
