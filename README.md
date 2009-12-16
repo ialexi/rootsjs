@@ -168,9 +168,11 @@ exports.Contacts = roots.Vein.extend({
 	":": function(iq, path, message){
 		if (iq.needsAuthentication) {
 			// add request to client's queue
-			iq.queue("auth", "");
+			iq.queue("auth", "", 30); // let that queue remain for up to 30 seconds...
 			
-			// really, should be relatively direct.
+			// we have to wait, but ...
+			// really, should be relatively direct (especially if everything is on the same
+			// server, because then it won't even have to leave)
 			this.seed(this.authenticatedPath + "/" + iq.id);
 			return;
 		}
@@ -180,6 +182,9 @@ exports.Contacts = roots.Vein.extend({
 		// not sure if this should work some other way;
 		// would like to separate DB from model-server; should it be implemented
 		// as message handler too? Might not be too tricky...
+		
+		// if this were distributed, we could probably dispatch this to a bunch of
+		// db servers, and let them respond back whenever.
 		var result = this.store.query(this.model);
 		result.callback(function(result){
 			// one way to do it (perhaps best way, perhaps not...)
