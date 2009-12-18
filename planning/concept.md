@@ -193,3 +193,12 @@ Pomona will have a few things:
   As long as the JSON protocol for that works, you are in business.
 
 
+Here's an example Data Source:
+Contacts.RootsSource = Pomona.DataSource.extend({
+	server: "/contacts/server", 	// where to connect Pomona to
+	path: "contacts", // optional path (such as an app path) that everything goes through.
+	models: { "contacts": Contacts.Contact, "groups": Contacts.Groups }
+});
+
+Simple, eh? "Attaches" to path contacts/contacts and contacts/groups on the HTTP provider at
+/contacts/server
